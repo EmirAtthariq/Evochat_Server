@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  /* config options here */
+const nextConfig = {
+  serverExternalPackages: ['@llamaindex/liteparse'],
+  // ...config lain yang sudah ada, jangan dihapus
 };
 
 export default nextConfig;

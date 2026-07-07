@@ -2,30 +2,46 @@ import { streamText } from 'ai';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { embedTexts } from '@/lib/embeddings';
 import { searchRelevantChunks } from '@/lib/search';
+import sql from '@/lib/db';
 
 const openrouter = createOpenRouter({ apiKey: process.env.OPENROUTER_API_KEY! });
-
 export async function POST(req: Request) {
-  const { messages } = await req.json();
+  const { messages, conversationId: incomingId } = await req.json();
   const question = messages[messages.length - 1].content;
 
-  // 1. embed pertanyaan user
+  let conversationId = incomingId;
+  if (!conversationId) {
+    const [newConv] = await sql`
+      insert into conversations (title)
+      values (${question.slice(0, 50)})
+      returning id
+    `;
+    conversationId = newConv.id;
+  }
+
+  await sql`
+    insert into messages (conversation_id, role, content)
+    values (${conversationId}, 'user', ${question})
+  `;
+
   const [queryEmbedding] = await embedTexts([question], 'query');
-
-  // 2. cari chunk paling relevan
   const chunks = await searchRelevantChunks(queryEmbedding, 5);
+  const context = chunks.map((c: any) => `[${c.heading_path}]\n${c.content}`).join('\n\n---\n\n');
 
-  const context = chunks
-    .map((c: any) => `[${c.heading_path}]\n${c.content}`)
-    .join('\n\n---\n\n');
+  const result = streamText({
+    model: openrouter('google/gemini-2.5-flash'),
+    system: `Kamu adalah asisten yang menjawab pertanyaan HANYA berdasarkan konteks berikut. Kalau informasinya tidak ada di konteks, jawab dengan jujur bahwa kamu tidak menemukan informasi tersebut.\n\nKonteks:\n${context}`,
+    messages,
+    maxOutputTokens: 2048,
+    onFinish: async ({ text }) => {
+      await sql`
+        insert into messages (conversation_id, role, content)
+        values (${conversationId}, 'assistant', ${text})
+      `;
+    },
+  });
 
-  // 3. compose prompt + panggil Gemini via OpenRouter, stream jawaban
-const result = streamText({
-  model: openrouter('google/gemini-2.5-flash'),
-  system: `Kamu adalah asisten yang menjawab pertanyaan HANYA berdasarkan konteks berikut. Kalau informasinya tidak ada di konteks, jawab dengan jujur bahwa kamu tidak menemukan informasi tersebut.\n\nKonteks:\n${context}`,
-  messages,
-  maxOutputTokens: 2048, // batasi biar gak minta kredit segede itu
-});
-
-  return result.toTextStreamResponse();
+  const response = result.toTextStreamResponse();
+  response.headers.set('X-Conversation-Id', conversationId);
+  return response;
 }

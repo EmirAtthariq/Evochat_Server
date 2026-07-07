@@ -54,8 +54,10 @@ export async function POST(req: Request) {
     return Response.json({ id: doc.id, chunks: chunks.length, status: 'ready' });
 
   } catch (err: any) {
+    console.error('Document processing failed:', err);
+    console.error('cause:', err.cause);
     await sql`update documents set status = 'failed', error_message = ${err.message} where id = ${doc.id}`;
-    return Response.json({ error: err.message }, { status: 500 });
+    return Response.json({ error: err.message, cause: err.cause?.message }, { status: 500 });
   }
 }
 

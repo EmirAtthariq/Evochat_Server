@@ -1,33 +1,34 @@
+import { LiteParse } from '@llamaindex/liteparse';
 import mammoth from 'mammoth';
-
 export async function extractDocx(buffer: Buffer): Promise<string> {
+  // mammoth does not provide convertToMarkdown; use extractRawText to get plain text
   const result = await mammoth.extractRawText({ buffer });
   return result.value;
 }
 
-export async function extractPdf(buffer: Buffer): Promise<string> {
-  const form = new FormData();
-  // Convert Node Buffer to Uint8Array for Blob compatibility
-  const uint8 = new Uint8Array(buffer);
-  form.append('files', new Blob([uint8]), 'doc.pdf');
-  form.append('strategy', 'hi_res');
 
-  const res = await fetch('https://api.unstructured.io/general/v0/general', {
-    method: 'POST',
-    headers: { 'unstructured-api-key': process.env.UNSTRUCTURED_API_KEY! },
-    body: form,
+
+export async function extractPdf(buffer: Buffer): Promise<string> {
+  const parser = new LiteParse({
+    ocrEnabled: true, // otomatis OCR kalau ada teks hasil scan/gambar
   });
 
-  if (!res.ok) throw new Error(`Unstructured API error: ${res.status}`);
-
-  const elements = await res.json();
-  return elements
-    .map((el: any) => (el.type === 'Title' ? `\n## ${el.text}\n` : el.text))
-    .join('\n');
+  const result = await parser.parse(buffer);
+  return result.text;
 }
 
-export async function extractText(buffer: Buffer, mimeType: string): Promise<string> {
-  if (mimeType.includes('wordprocessingml')) return extractDocx(buffer);
-  if (mimeType === 'application/pdf') return extractPdf(buffer);
-  throw new Error(`Unsupported mime type: ${mimeType}`);
+export async function extractText(
+  buffer: Buffer,
+  mimeType: string,
+  filename?: string
+): Promise<string> {
+  const ext = filename?.toLowerCase().split('.').pop();
+
+  if (mimeType.includes('wordprocessingml') || ext === 'docx') {
+    return extractDocx(buffer);
+  }
+  if (mimeType === 'application/pdf' || ext === 'pdf') {
+    return extractPdf(buffer);
+  }
+  throw new Error(`Unsupported file type: ${filename ?? mimeType}`);
 }
