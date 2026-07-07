@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.8",
     "@llamaindex/liteparse": "^2.4.1",
     "@llamaindex/liteparse-win32-x64-msvc": "^2.4.1",
     "@openrouter/ai-sdk-provider": "^3.0.0",

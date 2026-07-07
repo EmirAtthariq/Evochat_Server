@@ -1,10 +1,13 @@
 import { streamText } from 'ai';
-import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { embedTexts } from '@/lib/embeddings';
 import { searchRelevantChunks } from '@/lib/search';
 import sql from '@/lib/db';
 
-const openrouter = createOpenRouter({ apiKey: process.env.OPENROUTER_API_KEY! });
+const google = createGoogleGenerativeAI({
+  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY!,
+});
+
 export async function POST(req: Request) {
   const { messages, conversationId: incomingId } = await req.json();
   const question = messages[messages.length - 1].content;
@@ -29,8 +32,8 @@ export async function POST(req: Request) {
   const context = chunks.map((c: any) => `[${c.heading_path}]\n${c.content}`).join('\n\n---\n\n');
 
   const result = streamText({
-    model: openrouter('google/gemini-2.5-flash'),
-    system: `Kamu adalah asisten yang menjawab pertanyaan HANYA berdasarkan konteks berikut. Kalau informasinya tidak ada di konteks, jawab dengan jujur bahwa kamu tidak menemukan informasi tersebut.\n\nKonteks:\n${context}`,
+    model: google('gemini-2.5-flash'),
+    system: `Kamu adalah asisten yang menjawab pertanyaan HANYA berdasarkan konteks berikut. Jawab se MANUSIA mungkin. Kalau informasinya tidak ada di konteks, jawab dengan jujur bahwa kamu tidak menemukan informasi tersebut.\n\nKonteks:\n${context}`,
     messages,
     maxOutputTokens: 2048,
     onFinish: async ({ text }) => {
