@@ -2,6 +2,7 @@ import { streamText } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { embedTexts } from '@/lib/embeddings';
 import { searchRelevantChunks } from '@/lib/search';
+import { getUserFromRequest } from '@/lib/auth';
 import sql from '@/lib/db';
 
 const google = createGoogleGenerativeAI({
@@ -9,17 +10,31 @@ const google = createGoogleGenerativeAI({
 });
 
 export async function POST(req: Request) {
+  const user = await getUserFromRequest(req);
+
+  if (!user) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const { messages, conversationId: incomingId } = await req.json();
   const question = messages[messages.length - 1].content;
 
   let conversationId = incomingId;
+
   if (!conversationId) {
     const [newConv] = await sql`
-      insert into conversations (title)
-      values (${question.slice(0, 50)})
+      insert into conversations (title, user_id)
+      values (${question.slice(0, 50)}, ${user.id})
       returning id
     `;
     conversationId = newConv.id;
+  } else {
+    const [conv] = await sql`
+      select id from conversations where id = ${conversationId} and user_id = ${user.id}
+    `;
+    if (!conv) {
+      return Response.json({ error: 'Conversation not found or not yours' }, { status: 403 });
+    }
   }
 
   await sql`

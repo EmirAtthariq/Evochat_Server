@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { createClient } from '@/lib/supabase-client';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -28,30 +29,44 @@ export default function ChatTestPage() {
     setInput('');
     setLoading(true);
 
-    // tambahin placeholder kosong buat jawaban assistant yang bakal di-stream
     setMessages([...newMessages, { role: 'assistant', content: '' }]);
 
     try {
+      // ambil access token dari session admin yang lagi login
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        throw new Error('Sesi login tidak ditemukan, silakan login ulang.');
+      }
+
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           messages: newMessages,
           conversationId,
         }),
       });
 
-      // ambil conversationId dari header, simpan buat request berikutnya
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || `Request gagal (${res.status})`);
+      }
+
       const newConvId = res.headers.get('X-Conversation-Id');
       if (newConvId) setConversationId(newConvId);
 
       if (!res.body) throw new Error('No response body');
 
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let accumulated = '';
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulated = '';
 
-        while (true) {
+      while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
@@ -59,11 +74,11 @@ export default function ChatTestPage() {
         accumulated += chunkText;
 
         setMessages((prev) => {
-            const updated = [...prev];
-            updated[updated.length - 1] = { role: 'assistant', content: accumulated };
-            return updated;
+          const updated = [...prev];
+          updated[updated.length - 1] = { role: 'assistant', content: accumulated };
+          return updated;
         });
-        }
+      }
     } catch (err: any) {
       setMessages((prev) => {
         const updated = [...prev];
@@ -84,13 +99,7 @@ export default function ChatTestPage() {
           <p style={{ color: '#999' }}>Belum ada percakapan. Coba tanya sesuatu.</p>
         )}
         {messages.map((msg, i) => (
-          <div
-            key={i}
-            style={{
-              marginBottom: 12,
-              textAlign: msg.role === 'user' ? 'right' : 'left',
-            }}
-          >
+          <div key={i} style={{ marginBottom: 12, textAlign: msg.role === 'user' ? 'right' : 'left' }}>
             <div
               style={{
                 display: 'inline-block',
