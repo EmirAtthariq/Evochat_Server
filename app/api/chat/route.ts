@@ -10,8 +10,11 @@ const google = createGoogleGenerativeAI({
 });
 
 export async function POST(req: Request) {
+  console.log('=== REQUEST MASUK ===', new Date().toISOString());
+  
   const user = await getUserFromRequest(req);
-
+  console.log('User:', user?.id ?? 'NULL - unauthorized');
+  
   if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -47,7 +50,7 @@ export async function POST(req: Request) {
   const context = chunks.map((c: any) => `[${c.heading_path}]\n${c.content}`).join('\n\n---\n\n');
 
   const result = streamText({
-    model: google('gemini-2.5-flash'),
+    model: google('gemma-4-31b-it'),
     system: `Kamu adalah asisten yang menjawab pertanyaan HANYA berdasarkan konteks berikut. Jawab se MANUSIA mungkin. Kalau informasinya tidak ada di konteks, jawab dengan jujur bahwa kamu tidak menemukan informasi tersebut.\n\nKonteks:\n${context}`,
     messages,
     maxOutputTokens: 2048,
@@ -59,7 +62,9 @@ export async function POST(req: Request) {
     },
   });
 
-  const response = result.toTextStreamResponse();
-  response.headers.set('X-Conversation-Id', conversationId);
+const response = result.toTextStreamResponse();
+response.headers.set('X-Conversation-Id', conversationId);
+console.log('=== RESPONSE DIKIRIM ===', new Date().toISOString());
+return response;
   return response;
 }

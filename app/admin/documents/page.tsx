@@ -93,7 +93,7 @@ export default function AdminPage() {
         {documents.map((doc) => (
             <tr key={doc.id} style={{ borderBottom: '1px solid #eee' }}>
             <td>
-              <Link href={`/admin/documents/${doc.id}`} style={{ color: '#333', textDecoration: 'underline' }}>
+              <Link href={`/admin/documents/${doc.id}`} style={{ color: '#3A74F2', textDecoration: 'underline' }}>
                 {doc.title}
               </Link>
             </td>
