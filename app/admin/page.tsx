@@ -14,7 +14,7 @@ export default function AdminPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState('');
-
+    
   async function fetchDocuments() {
     const res = await fetch('/api/documents');
     const data = await res.json();
@@ -81,27 +81,47 @@ export default function AdminPage() {
 
       <table style={{ width: '100%', marginTop: 12, borderCollapse: 'collapse' }}>
         <thead>
-          <tr style={{ borderBottom: '1px solid #ccc' }}>
+        <tr style={{ borderBottom: '1px solid #ccc' }}>
             <th style={{ textAlign: 'left' }}>Judul</th>
             <th style={{ textAlign: 'left' }}>Status</th>
             <th style={{ textAlign: 'left' }}>Diupload</th>
-          </tr>
+            <th style={{ textAlign: 'left' }}>Aksi</th>
+        </tr>
         </thead>
         <tbody>
-          {documents.map((doc) => (
+        {documents.map((doc) => (
             <tr key={doc.id} style={{ borderBottom: '1px solid #eee' }}>
-              <td>{doc.title}</td>
-              <td>
+            <td>{doc.title}</td>
+            <td>
                 {doc.status}
                 {doc.status === 'failed' && doc.error_message && (
-                  <span style={{ color: 'red', fontSize: 12 }}> — {doc.error_message}</span>
+                <span style={{ color: 'red', fontSize: 12 }}> — {doc.error_message}</span>
                 )}
-              </td>
-              <td>{new Date(doc.created_at).toLocaleString('id-ID')}</td>
+            </td>
+            <td>{new Date(doc.created_at).toLocaleString('id-ID')}</td>
+            <td>
+                <button onClick={() => handleDelete(doc.id, doc.title)} style={{ color: 'red' }}>
+                Hapus
+                </button>
+            </td>
             </tr>
-          ))}
+        ))}
         </tbody>
       </table>
     </div>
   );
+  async function handleDelete(id: string, title: string) {
+  const confirmed = confirm(`Yakin mau hapus dokumen "${title}"? Aksi ini gak bisa dibatalin.`);
+  if (!confirmed) return;
+
+  const res = await fetch(`/api/documents/${id}`, { method: 'DELETE' });
+
+  if (res.ok) {
+    setMessage(`Dokumen "${title}" berhasil dihapus.`);
+    fetchDocuments(); // refresh list
+  } else {
+    const data = await res.json();
+    setMessage(`Gagal menghapus: ${data.error}`);
+  }
+}
 }
