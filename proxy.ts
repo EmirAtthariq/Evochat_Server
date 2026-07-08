@@ -23,22 +23,36 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  // getClaims() memverifikasi JWT dan mengembalikan seluruh claims,
+  // termasuk custom claim "user_role" yang ditambahkan lewat Auth Hook
+  const { data, error } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  const isAuthenticated = !error && !!claims;
+  const userRole = claims?.user_role; // 'admin' | 'user' | undefined
 
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
   const isApiRoute = request.nextUrl.pathname.startsWith('/api/documents');
   const isLoginPage = request.nextUrl.pathname === '/login';
 
-  // belum login, coba akses /admin atau /api/documents -> tolak
-  if (!user && (isAdminRoute || isApiRoute)) {
+  // belum login sama sekali -> tolak
+  if (!isAuthenticated && (isAdminRoute || isApiRoute)) {
     if (isApiRoute) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // udah login tapi masih buka /login -> lempar ke /admin
-  if (user && isLoginPage) {
+  // sudah login TAPI bukan admin -> tolak akses /admin dan /api/documents
+  if (isAuthenticated && userRole !== 'admin' && (isAdminRoute || isApiRoute)) {
+    if (isApiRoute) {
+      return NextResponse.json({ error: 'Forbidden: admin only' }, { status: 403 });
+    }
+    return NextResponse.redirect(new URL('/unauthorized', request.url));
+    // atau redirect ke '/' kalau mau lebih halus, tergantung UX yang kamu mau
+  }
+
+  // sudah login sebagai admin tapi masih buka /login -> lempar ke /admin
+  if (isAuthenticated && userRole === 'admin' && isLoginPage) {
     return NextResponse.redirect(new URL('/admin', request.url));
   }
 
