@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 interface Document {
   id: string;
@@ -91,7 +92,11 @@ export default function AdminPage() {
         <tbody>
         {documents.map((doc) => (
             <tr key={doc.id} style={{ borderBottom: '1px solid #eee' }}>
-            <td>{doc.title}</td>
+            <td>
+              <Link href={`/admin/documents/${doc.id}`} style={{ color: '#333', textDecoration: 'underline' }}>
+                {doc.title}
+              </Link>
+            </td>
             <td>
                 {doc.status}
                 {doc.status === 'failed' && doc.error_message && (
