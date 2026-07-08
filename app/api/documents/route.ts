@@ -62,6 +62,6 @@ export async function POST(req: Request) {
 }
 
 export async function GET() {
-  const docs = await sql`select id, title, status, created_at from documents order by created_at desc`;
+  const docs = await sql`select id, title, status, error_message, created_at from documents order by created_at desc`;
   return Response.json(docs);
 }
