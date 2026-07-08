@@ -16,13 +16,11 @@ export async function GET(req: Request) {
       { status: 404 }
     );
   }
-
-  const contacts = await sql`
-    select id, label, whatsapp_number
+    const contacts = await sql`
+    select id, label, pic_name, whatsapp_number
     from helpdesk_contacts
     where domisili = ${profile.domisili}
     order by label
-  `;
-
+    `;
   return Response.json({ domisili: profile.domisili, contacts });
 }
