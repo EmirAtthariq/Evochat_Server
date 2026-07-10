@@ -76,7 +76,8 @@ export async function POST(req: Request) {
        Jika informasi yang ditanya ADA di konteks,
         jawab langsung dan lengkap.
          Jika BENAR-BENAR tidak ada di konteks, b
-         aru bilang tidak menemukan informasinya.\n\nKonteks:\n${context}`,
+         aru bilang tidak menemukan informasinya dan tambahkan
+         "Silahkan untuk menghubungi Helpdesk yang tersedia jika membutuhkan bantuan lebih lanjut" di akhir pesan.\n\nKonteks:\n${context}`,
     messages,
     maxOutputTokens: 2048,
      temperature: 0.2,
