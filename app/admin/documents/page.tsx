@@ -76,6 +76,21 @@ export default function AdminDocumentsPage() {
     }
   }
 
+  async function handleDelete(id: string, title: string) {
+    const confirmed = confirm(`Yakin mau hapus dokumen "${title}"? Aksi ini tidak bisa dibatalkan.`);
+    if (!confirmed) return;
+
+    const res = await fetch(`/api/documents/${id}`, { method: 'DELETE' });
+
+    if (res.ok) {
+      setMessage(`Dokumen "${title}" berhasil dihapus.`);
+      fetchDocuments();
+    } else {
+      const data = await res.json();
+      setMessage(`Gagal menghapus: ${data.error}`);
+    }
+  }
+
   return (
     <div style={{ maxWidth: 800 }}>
       <h1>Dokumen Knowledge Base</h1>
@@ -108,6 +123,7 @@ export default function AdminDocumentsPage() {
             <th style={{ textAlign: 'left' }}>Domisili</th>
             <th style={{ textAlign: 'left' }}>Status</th>
             <th style={{ textAlign: 'left' }}>Diupload</th>
+            <th style={{ textAlign: 'left' }}>Aksi</th>
           </tr>
         </thead>
         <tbody>
@@ -126,6 +142,11 @@ export default function AdminDocumentsPage() {
                 )}
               </td>
               <td>{new Date(doc.created_at).toLocaleString('id-ID')}</td>
+              <td>
+                <button onClick={() => handleDelete(doc.id, doc.title)} style={{ color: 'red' }}>
+                  Hapus
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
