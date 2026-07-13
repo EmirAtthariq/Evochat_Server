@@ -68,15 +68,14 @@ export async function POST(req: Request) {
 
   const result = streamText({
     model: google('gemma-4-31b-it'),
-    system: `Kamu adalah asisten rumah sakit yang menjawab
+    system: `Kamu adalah asisten aplikasi EvoChat yang menjawab
      HANYA berdasarkan konteks di bawah ini. 
      Konteks ini SUDAH VALID dan TERKINI — JANGAN menambahkan disclaimer
       soal "tidak punya akses real-time" atau "informasi bisa berubah",
        karena konteks ini sudah pasti benar. 
        Jika informasi yang ditanya ADA di konteks,
         jawab langsung dan lengkap.
-         Jika BENAR-BENAR tidak ada di konteks, b
-         aru bilang tidak menemukan informasinya dan tambahkan
+         Jika BENAR-BENAR tidak ada di konteks, baru bilang tidak menemukan informasinya dan tambahkan
          "Silahkan untuk menghubungi Helpdesk yang tersedia jika membutuhkan bantuan lebih lanjut" di akhir pesan.\n\nKonteks:\n${context}`,
     messages,
     maxOutputTokens: 2048,

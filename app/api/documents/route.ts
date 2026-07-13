@@ -7,33 +7,31 @@ import { embedTexts } from '@/lib/embeddings';
 export async function POST(req: Request) {
   const formData = await req.formData();
   const file = formData.get('file') as File;
+  const domisili = formData.get('domisili') as string | null; // null/kosong = umum
+
   if (!file) return Response.json({ error: 'no file' }, { status: 400 });
 
   const buffer = Buffer.from(await file.arrayBuffer());
 
-  // 1. simpan record dulu, status processing
   const [doc] = await sql`
-    insert into documents (title, mime_type, status)
-    values (${file.name}, ${file.type}, 'processing')
+    insert into documents (title, mime_type, status, domisili)
+    values (${file.name}, ${file.type}, 'processing', ${domisili || null})
     returning id
   `;
 
   const filePath = `${doc.id}/${file.name}`;
 
   try {
-    // 2. upload file mentah ke storage
     await uploadFile(buffer, filePath, file.type);
     await sql`update documents set file_path = ${filePath} where id = ${doc.id}`;
 
-    // 3. extract -> markdown -> chunk
-    const markdown = await extractText(buffer, file.type);
+    const markdown = await extractText(buffer, file.type, file.name);
     const chunks = chunkMarkdown(markdown);
 
     if (chunks.length === 0) {
       throw new Error('No content extracted from document');
     }
 
-    // 4. embed per batch (voyage max ~128 input per request, aman pake 50)
     const BATCH_SIZE = 50;
     for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
       const batch = chunks.slice(i, i + BATCH_SIZE);
@@ -49,19 +47,19 @@ export async function POST(req: Request) {
       }
     }
 
-    // 5. selesai
     await sql`update documents set status = 'ready' where id = ${doc.id}`;
     return Response.json({ id: doc.id, chunks: chunks.length, status: 'ready' });
 
   } catch (err: any) {
-    console.error('Document processing failed:', err);
-    console.error('cause:', err.cause);
     await sql`update documents set status = 'failed', error_message = ${err.message} where id = ${doc.id}`;
-    return Response.json({ error: err.message, cause: err.cause?.message }, { status: 500 });
+    return Response.json({ error: err.message }, { status: 500 });
   }
 }
 
 export async function GET() {
-  const docs = await sql`select id, title, status, error_message, created_at from documents order by created_at desc`;
+  const docs = await sql`
+    select id, title, status, error_message, domisili, created_at
+    from documents order by created_at desc
+  `;
   return Response.json(docs);
 }
