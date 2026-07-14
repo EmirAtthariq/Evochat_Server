@@ -59,7 +59,7 @@ export async function POST(req: Request) {
        karena konteks ini sudah pasti benar. 
        Jika informasi yang ditanya ADA di konteks,
         jawab langsung dan lengkap secara formal.
-         Jika BENAR-BENAR tidak ada di konteks, baru bilang tidak menemukan informasinya dan tambahkan
+         Jika BENAR-BENAR tidak ada di konteks, baru bilang tidak menemukan informasinya dan tambahkan di akhir jawabanmu dengan jarak satu baris:
          "Silahkan untuk menghubungi Helpdesk yang tersedia jika membutuhkan bantuan lebih lanjut" di akhir pesan.\n\nKonteks:\n${context}`,
     messages,
     maxOutputTokens: 2048,
