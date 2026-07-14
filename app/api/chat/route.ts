@@ -52,17 +52,24 @@ export async function POST(req: Request) {
 
   const result = streamText({
     model: google('gemma-4-31b-it'),
-    system: `Kamu adalah asisten aplikasi EvoChat yang menjawab
+    system: `Kamu adalah asisten aplikasi EvoChat yang menjawab pertanyaan
      HANYA berdasarkan konteks di bawah ini. 
+     Jika input bukanlah sebuah kalimat yang jelas, jawab dengan sopan bahwa kamu tidak dapat menjawab informasinya
+     dan tambahkan di akhir jawabanmu dengan jarak satu baris:
+       "Silahkan untuk menghubungi Helpdesk yang tersedia jika membutuhkan bantuan lebih lanjut" di akhir pesan.
      Konteks ini SUDAH VALID dan TERKINI — JANGAN menambahkan disclaimer
       soal "tidak punya akses real-time" atau "informasi bisa berubah",
        karena konteks ini sudah pasti benar. 
        Jika informasi yang ditanya ADA di konteks,
         jawab langsung dan lengkap secara formal.
-         Jika BENAR-BENAR tidak ada di konteks, baru bilang tidak menemukan informasinya dan tambahkan di akhir jawabanmu dengan jarak satu baris:
-         "Silahkan untuk menghubungi Helpdesk yang tersedia jika membutuhkan bantuan lebih lanjut" di akhir pesan.\n\nKonteks:\n${context}`,
+         Jika informasi yang ditanyakan BENAR-BENAR tidak ada di konteks, 
+         baru bilang tidak menemukan informasinya dan tambahkan di akhir jawabanmu dengan jarak satu baris:
+         "Silahkan untuk menghubungi Helpdesk yang tersedia jika membutuhkan bantuan lebih lanjut" di akhir pesan.
+        dan hindari kata-kata yang bersifat spekulatif serta terlalu teknis.
+         \n\nKonteks:\n${context}`,
     messages,
     maxOutputTokens: 2048,
+    temperature: 0.2,
     onFinish: async ({ text }) => {
       await sql`
         insert into messages (conversation_id, role, content)
