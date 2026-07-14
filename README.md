@@ -20,7 +20,7 @@ Backend untuk EvoChat: chatbot AI berbasis RAG (Retrieval-Augmented Generation).
 
 ## Struktur Folder
 
-```
+``` text
 server/
 ├── app/
 │   ├── page.tsx                 # Landing page (masih starter default Next.js, belum dikustomisasi)
@@ -95,7 +95,7 @@ Server berjalan di `http://localhost:3000`.
 ## Endpoint Utama
 
 | Endpoint | Method | Auth | Keterangan |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `/api/chat` | POST | Bearer token | Kirim pertanyaan, terima jawaban streaming |
 | `/api/conversations` | GET | Bearer token | List riwayat percakapan user |
 | `/api/conversations/[id]/messages` | GET | Bearer token | Isi 1 percakapan |
