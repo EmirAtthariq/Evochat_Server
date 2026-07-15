@@ -18,6 +18,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const menu = [
     { href: '/admin/documents', label: 'Dokumen' },
     { href: '/admin/chat', label: 'Test Chat' },
+    { href: '/admin/helpdesk', label: 'Helpdesk' },
   ];
 
   return (

@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     Jika TIDAK dapat menjawab pertanyaan, tambahkan di akhir jawabanmu dengan jarak satu baris:
     "Silahkan untuk menghubungi Helpdesk yang tersedia jika membutuhkan bantuan lebih lanjut" 
     HANYA JIKA TIDAK DAPAT MENJAWAB PERTANYAANNYA.
-
+    
       \n\nKonteks:\n${context}`,
     messages,
     maxOutputTokens: 2048,
