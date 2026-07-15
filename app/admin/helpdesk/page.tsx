@@ -25,11 +25,15 @@ export default function AdminHelpdeskPage() {
     const res = await fetch('/api/admin/helpdesk-contacts');
     const data = await res.json();
     setContacts(data);
-    setDomisiliList(Array.from(new Set(data.map((c: Contact) => c.domisili))));
   }
-
+        async function fetchDomisiliOptions() {
+        const res = await fetch('/api/domisili-list');
+        const data = await res.json();
+        setDomisiliList(data);
+        }
   useEffect(() => {
     fetchContacts();
+    fetchDomisiliOptions();
   }, []);
 
   function resetForm() {

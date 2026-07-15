@@ -17,10 +17,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const menu = [
     { href: '/admin/documents', label: 'Dokumen' },
-    { href: '/admin/chat', label: 'Test Chat' },
+    { href: '/admin/domisili', label: 'Domisili' },
     { href: '/admin/helpdesk', label: 'Helpdesk' },
+    { href: '/admin/users', label: 'Kelola User' },
+    { href: '/admin/chat', label: 'Test Chat' },
   ];
-
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'sans-serif' }}>
       <aside style={{ width: 200, borderRight: '1px solid #eee', padding: 16 }}>
