@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 
 interface Document {
@@ -15,9 +15,13 @@ interface Document {
 export default function AdminDocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [domisiliOptions, setDomisiliOptions] = useState<string[]>([]);
-  const [selectedDomisili, setSelectedDomisili] = useState<string>(''); // '' = umum
+  const [selectedDomisili, setSelectedDomisili] = useState<string>(''); // '' = umum (buat upload)
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState('');
+
+  // state baru buat search & filter tabel
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterDomisili, setFilterDomisili] = useState<string>('all'); // 'all' | 'umum' | nama domisili
 
   async function fetchDocuments() {
     const res = await fetch('/api/documents');
@@ -91,6 +95,21 @@ export default function AdminDocumentsPage() {
     }
   }
 
+  // filter + search digabung, dihitung ulang otomatis tiap dependency berubah
+  const filteredDocuments = useMemo(() => {
+    return documents.filter((doc) => {
+      const matchesSearch = doc.title.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesDomisili =
+        filterDomisili === 'all' ||
+        (filterDomisili === 'umum' && doc.domisili === null) ||
+        doc.domisili === filterDomisili;
+
+      return matchesSearch && matchesDomisili;
+    });
+  }, [documents, searchQuery, filterDomisili]);
+  //sty
+  const cellStyle = { padding: '8px 16px' };
   return (
     <div style={{ maxWidth: 800 }}>
       <h1>Dokumen Knowledge Base</h1>
@@ -116,33 +135,60 @@ export default function AdminDocumentsPage() {
 
       {message && <p>{message}</p>}
 
+      {/* Search & filter buat tabel */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12, marginTop: 24 }}>
+        <input
+          type="text"
+          placeholder="Cari judul dokumen..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ flex: 1, padding: 8, border: '1px solid #ccc', borderRadius: 4 }}
+        />
+
+        <select
+          value={filterDomisili}
+          onChange={(e) => setFilterDomisili(e.target.value)}
+          style={{ padding: 8 }}
+        >
+          <option value="all">Semua Domisili</option>
+          <option value="umum">Umum</option>
+          {domisiliOptions.map((d) => (
+            <option key={d} value={d}>{d}</option>
+          ))}
+        </select>
+      </div>
+
+      <p style={{ fontSize: 13, color: '#666', marginBottom: 8 }}>
+        Menampilkan {filteredDocuments.length} dari {documents.length} dokumen
+      </p>
+
       <table style={{ width: '100%', marginTop: 12, borderCollapse: 'collapse' }}>
         <thead>
           <tr style={{ borderBottom: '1px solid #ccc' }}>
-            <th style={{ textAlign: 'left' }}>Judul</th>
-            <th style={{ textAlign: 'left' }}>Domisili</th>
-            <th style={{ textAlign: 'left' }}>Status</th>
-            <th style={{ textAlign: 'left' }}>Diupload</th>
-            <th style={{ textAlign: 'left' }}>Aksi</th>
+            <th style={{ textAlign: 'left', padding: '8px 16px 8px 0' }}>Judul</th>
+            <th style={{ textAlign: 'left', padding: '8px 16px' }}>Domisili</th>
+            <th style={{ textAlign: 'left', padding: '8px 16px' }}>Status</th>
+            <th style={{ textAlign: 'left', padding: '8px 16px' }}>Diupload</th>
+            <th style={{ textAlign: 'left', padding: '8px 0' }}>Aksi</th>
           </tr>
         </thead>
         <tbody>
-          {documents.map((doc) => (
+          {filteredDocuments.map((doc) => (
             <tr key={doc.id} style={{ borderBottom: '1px solid #eee' }}>
-              <td>
+              <td style={{ padding: '8px 16px 8px 0' }}>
                 <Link href={`/admin/documents/${doc.id}`} style={{ color: '#4093f7', textDecoration: 'underline' }}>
                   {doc.title}
                 </Link>
               </td>
-              <td>{doc.domisili ?? <em style={{ color: '#999' }}>Umum</em>}</td>
-              <td>
+              <td style={{ padding: '8px 16px' }}>{doc.domisili ?? <em style={{ color: '#999' }}>Umum</em>}</td>
+              <td style={{ padding: '8px 16px' }}>
                 {doc.status}
                 {doc.status === 'failed' && doc.error_message && (
                   <span style={{ color: 'red', fontSize: 12 }}> — {doc.error_message}</span>
                 )}
               </td>
-              <td>{new Date(doc.created_at).toLocaleString('id-ID')}</td>
-              <td>
+              <td style={{ padding: '8px 16px' }}>{new Date(doc.created_at).toLocaleString('id-ID')}</td>
+              <td style={{ padding: '8px 0' }}>
                 <button onClick={() => handleDelete(doc.id, doc.title)} style={{ color: 'red' }}>
                   Hapus
                 </button>
