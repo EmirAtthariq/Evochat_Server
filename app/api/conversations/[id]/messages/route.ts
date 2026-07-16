@@ -23,11 +23,10 @@ export async function GET(
   }
 
   const messages = await sql`
-    select role, content, created_at
+    select id, role, content, feedback, created_at
     from messages
     where conversation_id = ${id}
     order by created_at asc
   `;
-
   return Response.json({ conversation, messages });
 }
