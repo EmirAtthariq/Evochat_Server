@@ -20,6 +20,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin/domisili', label: 'Domisili' },
     { href: '/admin/helpdesk', label: 'Helpdesk' },
     { href: '/admin/users', label: 'Kelola User' },
+    { href: '/admin/feedback', label: 'Feedback' },
     { href: '/admin/chat', label: 'Test Chat' },
   ];
   return (

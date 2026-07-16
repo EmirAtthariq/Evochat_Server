@@ -31,7 +31,9 @@ export async function proxy(request: NextRequest) {
   const userRole = claims?.user_role; // 'admin' | 'user' | undefined
 
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
-  const isApiRoute = request.nextUrl.pathname.startsWith('/api/documents');
+    const isApiRoute =
+      request.nextUrl.pathname.startsWith('/api/documents') ||
+      request.nextUrl.pathname.startsWith('/api/admin');
   const isLoginPage = request.nextUrl.pathname === '/login';
 
   // belum login sama sekali -> tolak
