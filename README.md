@@ -16,7 +16,6 @@ Backend untuk EvoChat: chatbot AI berbasis RAG (Retrieval-Augmented Generation).
   - `.pdf` → `@llamaindex/liteparse` (parsing lokal + OCR bawaan, tidak pakai layanan cloud eksternal)
 - **Linting**: ESLint 9 (`eslint-config-next`)
 
-> Catatan: dependency `@openrouter/ai-sdk-provider` sudah terpasang di `package.json` tapi belum dipakai di kode manapun — kemungkinan disiapkan untuk provider AI alternatif di masa depan.
 
 ## Struktur Folder
 
