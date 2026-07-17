@@ -58,12 +58,13 @@ export default function AdminFeedbackPage() {
           <button
             key={f}
             onClick={() => handleFilterChange(f)}
+            className="hover:opacity-90 transition-opacity"
             style={{
               padding: '6px 14px',
               borderRadius: 6,
-              border: '1px solid #ccc',
-              background: filter === f ? '#333' : '#fff',
-              color: filter === f ? '#fff' : '#333',
+              border: '1px solid #93c5fd',
+              background: filter === f ? '#2563eb' : '#fff',
+              color: filter === f ? '#fff' : '#2563eb',
               cursor: 'pointer',
             }}
           >
@@ -86,6 +87,7 @@ export default function AdminFeedbackPage() {
               borderLeft: `4px solid ${item.feedback === 'up' ? '#2e7d32' : '#c62828'}`,
               borderRadius: 8,
               padding: 16,
+              background: item.feedback === 'up' ? '#f0fdf4' : '#fef2f2',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -96,17 +98,21 @@ export default function AdminFeedbackPage() {
                 {item.feedback === 'up' ? '👍' : '👎'}
               </span>
             </div>
-            <p style={{ fontWeight: 600, marginBottom: 4 }}>
+            <p style={{ fontWeight: 600, marginBottom: 4, color: '#111' }}>
               Q: {item.question ?? <em style={{ color: '#999' }}>(tidak ditemukan)</em>}
             </p>
-                <p style={{ color: '#fff' }}>A: {item.answer}</p>
+                <p style={{ color: '#333' }}>A: {item.answer}</p>
           </div>
         ))}
       </div>
 
       {!loading && total > 0 && (
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 16 }}>
-          <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
+          <button
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={page === 0}
+            className="disabled:opacity-40 disabled:cursor-not-allowed hover:text-blue-600"
+          >
             Sebelumnya
           </button>
           <span style={{ fontSize: 14 }}>
@@ -115,6 +121,7 @@ export default function AdminFeedbackPage() {
           <button
             onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
             disabled={page >= totalPages - 1}
+            className="disabled:opacity-40 disabled:cursor-not-allowed hover:text-blue-600"
           >
             Berikutnya
           </button>

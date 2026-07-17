@@ -101,12 +101,15 @@ export default function ChatTestPage() {
         {messages.map((msg, i) => (
           <div key={i} style={{ marginBottom: 12, textAlign: msg.role === 'user' ? 'right' : 'left' }}>
             <div
+              className={
+                msg.role === 'user'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 text-gray-900'
+              }
               style={{
                 display: 'inline-block',
                 padding: '8px 12px',
                 borderRadius: 12,
-                background: msg.role === 'user' ? '#333' : '#f0f0f0',
-                color: msg.role === 'user' ? '#fff' : '#000',
                 maxWidth: '80%',
                 textAlign: 'left',
                 whiteSpace: 'pre-wrap',
@@ -119,21 +122,27 @@ export default function ChatTestPage() {
         <div ref={bottomRef} />
       </div>
 
-      <form onSubmit={handleSend} style={{ display: 'flex', gap: 8 }}>
+      <form onSubmit={handleSend} className="flex gap-2">
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Tanya sesuatu..."
           disabled={loading}
+          className="border border-gray-300 focus:border-blue-500 focus:outline-none"
           style={{ flex: 1, padding: 10 }}
         />
-        <button type="submit" disabled={loading}>
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-400"
+          style={{ padding: '10px 16px', borderRadius: 6 }}
+        >
           {loading ? '...' : 'Kirim'}
         </button>
       </form>
 
       {conversationId && (
-        <p style={{ fontSize: 12, color: '#999', marginTop: 8 }}>
+        <p className="text-xs text-gray-500 mt-2">
           Conversation ID: {conversationId}
         </p>
       )}
