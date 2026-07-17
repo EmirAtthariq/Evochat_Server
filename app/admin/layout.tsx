@@ -8,12 +8,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const router = useRouter();
 
-  async function handleLogout() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push('/login');
-    router.refresh();
+async function handleLogout() {
+  const supabase = createClient();
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    console.error('Logout error:', error);
+    return;
   }
+  router.push('/login');
+  router.refresh();
+}
 
   const menu = [
     { href: '/admin', label: 'Dashboard' },
