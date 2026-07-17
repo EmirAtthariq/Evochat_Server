@@ -39,46 +39,46 @@ export default function DocumentDetailPage() {
       });
   }, [id]);
 
-  if (loading) return <p>Memuat...</p>;
-  if (!document) return <p>Dokumen tidak ditemukan.</p>;
+  if (loading) return <p className="text-gray-500">Memuat...</p>;
+  if (!document) return <p className="text-gray-500">Dokumen tidak ditemukan.</p>;
 
   return (
-    <div style={{ maxWidth: 800 }}>
-      <button onClick={() => router.push('/admin/documents')} style={{ marginBottom: 16 }}>
+    <div className="max-w-3xl">
+      <button
+        onClick={() => router.push('/admin/documents')}
+        className="mb-4 px-3 py-1.5 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-100"
+      >
         ← Kembali
       </button>
 
-      <h1>{document.title}</h1>
-      <p style={{ color: '#666' }}>
-        Status: <strong>{document.status}</strong> · {chunks.length} chunk
+      <h1 className="text-2xl font-bold">{document.title}</h1>
+      <p className="text-gray-500 mt-1">
+        Status: <strong className="text-gray-700">{document.status}</strong> · {chunks.length} chunk
       </p>
       {document.status === 'failed' && document.error_message && (
-        <p style={{ color: 'red' }}>Error: {document.error_message}</p>
+        <p className="text-red-500 mt-1">Error: {document.error_message}</p>
       )}
 
-      <h2 style={{ marginTop: 24 }}>Chunks</h2>
+      <h2 className="text-lg font-semibold mt-6 mb-3">Chunks</h2>
 
-      {chunks.length === 0 && <p style={{ color: '#999' }}>Belum ada chunk (dokumen mungkin masih diproses atau gagal).</p>}
+      {chunks.length === 0 && (
+        <p className="text-gray-400">Belum ada chunk (dokumen mungkin masih diproses atau gagal).</p>
+      )}
 
       {chunks.map((chunk) => (
         <div
           key={chunk.id}
-          style={{
-            border: '1px solid #eee',
-            borderRadius: 8,
-            padding: 16,
-            marginBottom: 12,
-          }}
+          className="border border-gray-200 rounded-lg p-4 mb-3"
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-            <span style={{ fontSize: 12, color: '#999' }}>
+          <div className="flex justify-between mb-2">
+            <span className="text-xs text-gray-400">
               Chunk #{chunk.chunk_index}
             </span>
-            <span style={{ fontSize: 12, color: '#666', fontWeight: 'bold' }}>
+            <span className="text-xs font-bold text-gray-600">
               {chunk.heading_path || '(tanpa heading)'}
             </span>
           </div>
-          <p style={{ whiteSpace: 'pre-wrap', fontSize: 14 }}>{chunk.content}</p>
+          <p className="whitespace-pre-wrap text-sm text-gray-800">{chunk.content}</p>
         </div>
       ))}
     </div>

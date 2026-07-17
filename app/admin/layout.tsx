@@ -24,32 +24,40 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin/feedback', label: 'Feedback' },
     { href: '/admin/chat', label: 'Test Chat' },
   ];
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'sans-serif' }}>
-      <aside style={{ width: 200, borderRight: '1px solid #eee', padding: 16 }}>
-        <h2 style={{ fontSize: 18, marginBottom: 24 }}>Admin</h2>
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {menu.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              style={{
-                padding: '8px 12px',
-                borderRadius: 6,
-                textDecoration: 'none',
-                color: pathname === item.href ? '#fff' : '#333',
-                background: pathname === item.href ? '#333' : 'transparent',
-              }}
-            >
-              {item.label}
-            </Link>
-          ))}
+    <div className="flex min-h-screen font-sans">
+      <aside className="w-52 border-r border-gray-200 p-4 flex flex-col">
+        <h2 className="text-lg font-semibold mb-6">Admin</h2>
+
+        <nav className="flex flex-col gap-1 flex-1">
+          {menu.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`px-3 py-2 rounded-md text-sm transition-colors ${
+                  isActive
+                    ? 'bg-gray-800 text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
-        <button onClick={handleLogout} style={{ marginTop: 32 }}>
+
+        <button
+          onClick={handleLogout}
+          className="mt-8 px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-100"
+        >
           Logout
         </button>
       </aside>
-      <main style={{ flex: 1, padding: 24 }}>{children}</main>
+
+      <main className="flex-1 p-6">{children}</main>
     </div>
   );
 }

@@ -67,33 +67,40 @@ export default function AdminDomisiliPage() {
   }
 
   return (
-    <div style={{ maxWidth: 500 }}>
-      <h1>Kelola Domisili</h1>
-      <p style={{ color: '#666', fontSize: 14 }}>
+    <div className="max-w-md">
+      <h1 className="text-2xl font-bold mb-1">Kelola Domisili</h1>
+      <p className="text-sm text-gray-500 mb-4">
         Daftar cabang/domisili yang tersedia untuk dipilih saat upload dokumen, kelola kontak helpdesk, dan assign user.
       </p>
 
-      <form onSubmit={handleAdd} style={{ display: 'flex', gap: 8, marginTop: 16, marginBottom: 16 }}>
+      <form onSubmit={handleAdd} className="flex gap-2 mb-4">
         <input
           value={newNama}
           onChange={(e) => setNewNama(e.target.value)}
           placeholder="Nama domisili baru"
-          style={{ flex: 1, padding: 8 }}
+          className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
         />
-        <button type="submit" disabled={saving}>
+        <button
+          type="submit"
+          disabled={saving}
+          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+        >
           {saving ? 'Menambah...' : 'Tambah'}
         </button>
       </form>
 
-      {message && <p style={{ fontSize: 14, color: 'red' }}>{message}</p>}
+      {message && <p className="text-sm text-red-500 mb-3">{message}</p>}
 
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <table className="w-full border-collapse">
         <tbody>
           {items.map((item) => (
-            <tr key={item.id} style={{ borderBottom: '1px solid #eee' }}>
-              <td style={{ padding: '10px 0' }}>{item.nama}</td>
-              <td style={{ padding: '10px 0', textAlign: 'right' }}>
-                <button onClick={() => handleDelete(item.id, item.nama)} style={{ color: 'red' }}>
+            <tr key={item.id} className="border-b border-gray-200">
+              <td className="py-2.5">{item.nama}</td>
+              <td className="py-2.5 text-right">
+                <button
+                  onClick={() => handleDelete(item.id, item.nama)}
+                  className="px-3 py-1.5 bg-red-50 text-red-600 text-xs font-medium rounded-md hover:bg-red-100"
+                >
                   Hapus
                 </button>
               </td>
@@ -102,7 +109,7 @@ export default function AdminDomisiliPage() {
         </tbody>
       </table>
 
-      {items.length === 0 && <p style={{ color: '#999' }}>Belum ada domisili terdaftar.</p>}
+      {items.length === 0 && <p className="text-gray-400 mt-3">Belum ada domisili terdaftar.</p>}
     </div>
   );
 }

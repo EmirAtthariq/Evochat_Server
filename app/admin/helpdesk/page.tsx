@@ -26,11 +26,13 @@ export default function AdminHelpdeskPage() {
     const data = await res.json();
     setContacts(data);
   }
-        async function fetchDomisiliOptions() {
-        const res = await fetch('/api/domisili-list');
-        const data = await res.json();
-        setDomisiliList(data);
-        }
+
+  async function fetchDomisiliOptions() {
+    const res = await fetch('/api/domisili-list');
+    const data = await res.json();
+    setDomisiliList(data);
+  }
+
   useEffect(() => {
     fetchContacts();
     fetchDomisiliOptions();
@@ -97,28 +99,18 @@ export default function AdminHelpdeskPage() {
     }
   }
 
-  // grouping berdasarkan domisili biar rapi ditampilkan
   const grouped = contacts.reduce<Record<string, Contact[]>>((acc, c) => {
     (acc[c.domisili] ??= []).push(c);
     return acc;
   }, {});
 
   return (
-    <div style={{ maxWidth: 800 }}>
-      <h1>Kelola Domisili & Kontak Helpdesk</h1>
+    <div className="max-w-4xl">
+      <h1 className="text-2xl font-bold mb-4">Kelola Domisili &amp; Kontak Helpdesk</h1>
 
       <form
         onSubmit={handleSubmit}
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 8,
-          marginTop: 16,
-          marginBottom: 8,
-          padding: 16,
-          border: '1px solid #eee',
-          borderRadius: 8,
-        }}
+        className="flex flex-wrap gap-2 mt-4 mb-2 p-4 border border-gray-200 rounded-lg"
       >
         <input
           list="domisili-options"
@@ -126,7 +118,7 @@ export default function AdminHelpdeskPage() {
           value={form.domisili}
           onChange={(e) => setForm({ ...form, domisili: e.target.value })}
           required
-          style={{ padding: 8, flex: '1 1 150px' }}
+          className="flex-1 min-w-[150px] px-3 py-2 border border-gray-300 rounded-md text-sm"
         />
         <datalist id="domisili-options">
           {domisiliList.map((d) => (
@@ -139,14 +131,14 @@ export default function AdminHelpdeskPage() {
           value={form.label}
           onChange={(e) => setForm({ ...form, label: e.target.value })}
           required
-          style={{ padding: 8, flex: '1 1 150px' }}
+          className="flex-1 min-w-[150px] px-3 py-2 border border-gray-300 rounded-md text-sm"
         />
 
         <input
           placeholder="Nama PIC (opsional)"
           value={form.pic_name}
           onChange={(e) => setForm({ ...form, pic_name: e.target.value })}
-          style={{ padding: 8, flex: '1 1 150px' }}
+          className="flex-1 min-w-[150px] px-3 py-2 border border-gray-300 rounded-md text-sm"
         />
 
         <input
@@ -154,48 +146,66 @@ export default function AdminHelpdeskPage() {
           value={form.whatsapp_number}
           onChange={(e) => setForm({ ...form, whatsapp_number: e.target.value })}
           required
-          style={{ padding: 8, flex: '1 1 150px' }}
+          className="flex-1 min-w-[150px] px-3 py-2 border border-gray-300 rounded-md text-sm"
         />
 
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button type="submit" disabled={saving}>
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            disabled={saving}
+            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
             {saving ? 'Menyimpan...' : editingId ? 'Simpan Perubahan' : 'Tambah Kontak'}
           </button>
           {editingId && (
-            <button type="button" onClick={resetForm}>
+            <button
+              type="button"
+              onClick={resetForm}
+              className="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-100"
+            >
               Batal
             </button>
           )}
         </div>
       </form>
 
-      {message && <p style={{ fontSize: 14 }}>{message}</p>}
+      {message && <p className="text-sm text-gray-700 mb-2">{message}</p>}
 
       {Object.keys(grouped).length === 0 && (
-        <p style={{ color: '#999', marginTop: 16 }}>Belum ada kontak helpdesk.</p>
+        <p className="text-gray-400 mt-4">Belum ada kontak helpdesk.</p>
       )}
 
       {Object.entries(grouped).map(([domisili, items]) => (
-        <div key={domisili} style={{ marginTop: 24 }}>
-          <h3 style={{ marginBottom: 8 }}>{domisili}</h3>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div key={domisili} className="mt-6">
+          <h3 className="font-semibold mb-2">{domisili}</h3>
+          <table className="w-full border-collapse">
             <thead>
-              <tr style={{ borderBottom: '1px solid #ccc' }}>
-                <th style={{ textAlign: 'left', padding: '8px 16px 8px 0' }}>Label</th>
-                <th style={{ textAlign: 'left', padding: '8px 16px' }}>PIC</th>
-                <th style={{ textAlign: 'left', padding: '8px 16px' }}>Nomor WA</th>
-                <th style={{ textAlign: 'left', padding: '8px 0' }}>Aksi</th>
+              <tr className="border-b border-gray-300">
+                <th className="text-left py-2 pr-4">Label</th>
+                <th className="text-left py-2 px-4">PIC</th>
+                <th className="text-left py-2 px-4">Nomor WA</th>
+                <th className="text-left py-2">Aksi</th>
               </tr>
             </thead>
             <tbody>
               {items.map((c) => (
-                <tr key={c.id} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={{ padding: '8px 16px 8px 0' }}>{c.label}</td>
-                  <td style={{ padding: '8px 16px' }}>{c.pic_name ?? <em style={{ color: '#999' }}>—</em>}</td>
-                  <td style={{ padding: '8px 16px' }}>{c.whatsapp_number}</td>
-                  <td style={{ padding: '8px 0', display: 'flex', gap: 8 }}>
-                    <button onClick={() => startEdit(c)}>Edit</button>
-                    <button onClick={() => handleDelete(c.id, c.label)} style={{ color: 'red' }}>
+                <tr key={c.id} className="border-b border-gray-200">
+                  <td className="py-2 pr-4">{c.label}</td>
+                  <td className="py-2 px-4">
+                    {c.pic_name ?? <em className="text-gray-400">—</em>}
+                  </td>
+                  <td className="py-2 px-4">{c.whatsapp_number}</td>
+                  <td className="py-2 flex gap-2">
+                    <button
+                      onClick={() => startEdit(c)}
+                      className="px-3 py-1.5 bg-blue-50 text-blue-600 text-xs font-medium rounded-md hover:bg-blue-100"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(c.id, c.label)}
+                      className="px-3 py-1.5 bg-red-50 text-red-600 text-xs font-medium rounded-md hover:bg-red-100"
+                    >
                       Hapus
                     </button>
                   </td>

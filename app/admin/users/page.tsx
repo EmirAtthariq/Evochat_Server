@@ -23,11 +23,13 @@ export default function AdminUsersPage() {
     const data: AppUser[] = await res.json();
     setUsers(data);
   }
+
   async function fetchDomisiliOptions() {
-  const res = await fetch('/api/domisili-list');
-  const data = await res.json();
-  setDomisiliList(data);
-}
+    const res = await fetch('/api/domisili-list');
+    const data = await res.json();
+    setDomisiliList(data);
+  }
+
   useEffect(() => {
     fetchUsers();
     fetchDomisiliOptions();
@@ -70,13 +72,13 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div style={{ maxWidth: 900 }}>
-      <h1>Kelola User</h1>
-      <p style={{ color: '#666', fontSize: 14 }}>
+    <div className="max-w-5xl">
+      <h1 className="text-2xl font-bold mb-1">Kelola User</h1>
+      <p className="text-sm text-gray-500 mb-4">
         Assign nama dan domisili untuk tiap akun yang terdaftar. Domisili menentukan knowledge base dan kontak helpdesk yang bisa diakses user.
       </p>
 
-      {message && <p style={{ fontSize: 14 }}>{message}</p>}
+      {message && <p className="text-sm text-gray-700 mb-2">{message}</p>}
 
       <datalist id="domisili-options">
         {domisiliList.map((d) => (
@@ -84,14 +86,14 @@ export default function AdminUsersPage() {
         ))}
       </datalist>
 
-      <table style={{ width: '100%', marginTop: 16, borderCollapse: 'collapse' }}>
+      <table className="w-full mt-4 border-collapse">
         <thead>
-          <tr style={{ borderBottom: '1px solid #ccc' }}>
-            <th style={{ textAlign: 'left', padding: '8px 16px 8px 0' }}>Email</th>
-            <th style={{ textAlign: 'left', padding: '8px 16px' }}>Nama</th>
-            <th style={{ textAlign: 'left', padding: '8px 16px' }}>Domisili</th>
-            <th style={{ textAlign: 'left', padding: '8px 16px' }}>Terdaftar</th>
-            <th style={{ textAlign: 'left', padding: '8px 0' }}>Aksi</th>
+          <tr className="border-b border-gray-300">
+            <th className="text-left py-2 pr-4">Email</th>
+            <th className="text-left py-2 px-4">Nama</th>
+            <th className="text-left py-2 px-4">Domisili</th>
+            <th className="text-left py-2 px-4">Terdaftar</th>
+            <th className="text-left py-2">Aksi</th>
           </tr>
         </thead>
         <tbody>
@@ -99,52 +101,65 @@ export default function AdminUsersPage() {
             const isEditing = editingId === user.id;
 
             return (
-              <tr key={user.id} style={{ borderBottom: '1px solid #eee' }}>
-                <td style={{ padding: '8px 16px 8px 0' }}>{user.email}</td>
+              <tr key={user.id} className="border-b border-gray-200">
+                <td className="py-2 pr-4">{user.email}</td>
 
-                <td style={{ padding: '8px 16px' }}>
+                <td className="py-2 px-4">
                   {isEditing ? (
                     <input
                       value={editForm.nama}
                       onChange={(e) => setEditForm({ ...editForm, nama: e.target.value })}
                       placeholder="Nama"
-                      style={{ padding: 6, width: '100%' }}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
                     />
                   ) : (
-                    user.nama ?? <em style={{ color: '#999' }}>Belum diisi</em>
+                    user.nama ?? <em className="text-gray-400">Belum diisi</em>
                   )}
                 </td>
 
-                <td style={{ padding: '8px 16px' }}>
+                <td className="py-2 px-4">
                   {isEditing ? (
                     <input
                       list="domisili-options"
                       value={editForm.domisili}
                       onChange={(e) => setEditForm({ ...editForm, domisili: e.target.value })}
                       placeholder="Domisili"
-                      style={{ padding: 6, width: '100%' }}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
                     />
                   ) : (
-                    user.domisili ?? <em style={{ color: '#999' }}>Belum diisi</em>
+                    user.domisili ?? <em className="text-gray-400">Belum diisi</em>
                   )}
                 </td>
 
-                <td style={{ padding: '8px 16px', fontSize: 13, color: '#666' }}>
+                <td className="py-2 px-4 text-sm text-gray-500">
                   {new Date(user.registered_at).toLocaleDateString('id-ID')}
                 </td>
 
-                <td style={{ padding: '8px 0' }}>
+                <td className="py-2">
                   {isEditing ? (
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button onClick={() => handleSave(user.id)} disabled={saving}>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleSave(user.id)}
+                        disabled={saving}
+                        className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                      >
                         {saving ? 'Menyimpan...' : 'Simpan'}
                       </button>
-                      <button onClick={cancelEdit} disabled={saving}>
+                      <button
+                        onClick={cancelEdit}
+                        disabled={saving}
+                        className="px-3 py-1.5 border border-gray-300 text-gray-700 text-xs font-medium rounded-md hover:bg-gray-100 disabled:opacity-50"
+                      >
                         Batal
                       </button>
                     </div>
                   ) : (
-                    <button onClick={() => startEdit(user)}>Edit</button>
+                    <button
+                      onClick={() => startEdit(user)}
+                      className="px-3 py-1.5 bg-blue-50 text-blue-600 text-xs font-medium rounded-md hover:bg-blue-100"
+                    >
+                      Edit
+                    </button>
                   )}
                 </td>
               </tr>
@@ -153,7 +168,7 @@ export default function AdminUsersPage() {
         </tbody>
       </table>
 
-      {users.length === 0 && <p style={{ color: '#999', marginTop: 16 }}>Belum ada user terdaftar.</p>}
+      {users.length === 0 && <p className="text-gray-400 mt-4">Belum ada user terdaftar.</p>}
     </div>
   );
 }
