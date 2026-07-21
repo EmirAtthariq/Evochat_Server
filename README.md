@@ -31,17 +31,31 @@ server/
 │   │   ├── layout.tsx            # Layout admin panel (menu, logout)
 │   │   ├── page.tsx              # Redirect ke /admin/documents
 │   │   ├── chat/page.tsx         # Halaman test chat
-│   │   └── documents/
-│   │       ├── page.tsx          # List & upload dokumen knowledge base
-│   │       └── [id]/page.tsx     # Detail dokumen & chunk hasil parsing
+│   │   ├── documents/
+│   │   │   ├── page.tsx          # List & upload dokumen knowledge base
+│   │   │   └── [id]/page.tsx     # Detail dokumen & chunk hasil parsing
+│   │   ├── domisili/page.tsx     # Kelola daftar domisili cabang
+│   │   ├── feedback/page.tsx     # Lihat feedback (up/down) pengguna atas jawaban bot
+│   │   ├── helpdesk/page.tsx     # Kelola kontak WhatsApp per domisili
+│   │   └── users/page.tsx        # List user terdaftar (join auth.users + profiles)
 │   └── api/
 │       ├── chat/                 # Endpoint chatbot (streaming)
 │       ├── conversations/        # Riwayat percakapan
+│       │   └── [id]/messages/    # Isi 1 percakapan
+│       ├── messages/
+│       │   └── [id]/feedback/    # Kirim feedback up/down untuk 1 jawaban bot
 │       ├── documents/            # Upload & kelola dokumen knowledge base
-│       ├── domisili-list/        # Daftar domisili cabang
-│       ├── helpdesk/             # Kontak WhatsApp per domisili
+│       │   └── [id]/chunks/      # Lihat chunk hasil parsing 1 dokumen
+│       ├── domisili-list/        # Daftar domisili cabang (untuk mobile)
+│       ├── helpdesk/             # Kontak WhatsApp per domisili user
 │       ├── health/               # Endpoint pengecekan status DB
-│       └── profile/              # Data profil user
+│       ├── profile/              # Data profil user
+│       └── admin/                # Endpoint khusus admin panel
+│           ├── dashboard/        # Ringkasan statistik (dokumen, chat, feedback, user)
+│           ├── domisili/         # CRUD daftar domisili cabang
+│           ├── helpdesk-contacts/# CRUD kontak WhatsApp helpdesk
+│           ├── feedback/         # List feedback up/down beserta Q&A-nya
+│           └── users/            # List user terdaftar
 ├── lib/
 │   ├── auth.ts                   # Validasi Bearer token (dipakai Flutter/mobile)
 │   ├── chunk.ts                  # Chunking dokumen per-heading
@@ -81,7 +95,19 @@ GOOGLE_GENERATIVE_AI_API_KEY=AIzaSy-xxxxx
 
 ### 3. Setup database
 
-Jalankan schema SQL di SQL Editor Supabase/Neon (lihat `docs/schema.sql` atau riwayat setup) untuk membuat tabel: `documents`, `document_chunks`, `conversations`, `messages`, `profiles`, `helpdesk_contacts`. Aktifkan extension `vector` terlebih dahulu.
+Jalankan schema SQL di SQL Editor Supabase/Neon (lihat `docs/schema.sql` atau riwayat setup) untuk membuat tabel berikut. Aktifkan extension `vector` terlebih dahulu.
+
+| Tabel | Keterangan |
+| --- | --- |
+| `documents` | Metadata dokumen (`title`, `mime_type`, `status`: processing/ready/failed, `error_message`, `file_path`, `domisili` nullable) |
+| `document_chunks` | Hasil chunking + `embedding` vector, `heading_path`, `chunk_index`, relasi ke `documents` (cascade delete) |
+| `conversations` | Riwayat percakapan per user (`title`, `user_id`) |
+| `messages` | Isi pesan (`role`: user/assistant, `content`, **`feedback`**: `up`/`down`/`null`), relasi ke `conversations` (cascade delete) |
+| `profiles` | Profil tambahan user (`nama`, `domisili`), relasi 1:1 ke `auth.users` bawaan Supabase |
+| `domisili` | Master data nama domisili cabang (`nama`) |
+| `helpdesk_contacts` | Kontak WhatsApp helpdesk per domisili (`domisili`, `label`, `pic_name`, `whatsapp_number`) |
+
+Catatan: endpoint `/api/admin/users` dan dashboard membaca langsung dari tabel `auth.users` milik Supabase Auth (bukan tabel custom), di-join dengan `profiles`.
 
 ### 4. Jalankan dev server
 
@@ -93,19 +119,34 @@ Server berjalan di `http://localhost:3000`.
 
 ## Endpoint Utama
 
+### Mobile / user (Bearer token)
+
 | Endpoint | Method | Auth | Keterangan |
 | --- | --- | --- | --- |
-| `/api/chat` | POST | Bearer token | Kirim pertanyaan, terima jawaban streaming |
+| `/api/chat` | POST | Bearer token | Kirim pertanyaan, terima jawaban streaming (RAG), simpan riwayat |
 | `/api/conversations` | GET | Bearer token | List riwayat percakapan user |
 | `/api/conversations/[id]/messages` | GET | Bearer token | Isi 1 percakapan |
-| `/api/conversations/[id]` | DELETE | Bearer token | Hapus percakapan |
-| `/api/documents` | GET, POST | Cookie (admin, role `admin`) | List & upload dokumen knowledge base |
-| `/api/documents/[id]` | DELETE | Cookie (admin, role `admin`) | Hapus dokumen |
-| `/api/documents/[id]/chunks` | GET | Cookie (admin, role `admin`) | Lihat chunk hasil parsing |
-| `/api/domisili-list` | GET | Bearer token | Daftar domisili cabang |
-| `/api/helpdesk` | GET | Bearer token | Kontak WhatsApp sesuai domisili user |
-| `/api/profile` | GET | Bearer token | Data profil (nama, domisili) |
+| `/api/conversations/[id]` | DELETE | Bearer token | Hapus percakapan (message ikut terhapus via cascade) |
+| `/api/messages/[id]/feedback` | POST | Bearer token | Kirim/ubah feedback (`up`/`down`/`null`) untuk 1 jawaban bot |
+| `/api/domisili-list` | GET | — | Daftar nama domisili cabang (untuk pilihan di app) |
+| `/api/helpdesk` | GET | Bearer token | Kontak WhatsApp sesuai domisili user yang login |
+| `/api/profile` | GET | Bearer token | Data profil (email, nama, domisili) |
 | `/api/health` | GET | — | Cek koneksi database (`select now()`) |
+
+### Admin panel (session cookie, role `admin`)
+
+Semua rute di bawah ini dan `/api/documents/*` dijaga oleh `proxy.ts` — request tanpa sesi valid atau tanpa claim `user_role = admin` ditolak (401/403).
+
+| Endpoint | Method | Keterangan |
+| --- | --- | --- |
+| `/api/documents` | GET, POST | List & upload dokumen knowledge base (memicu ingestion) |
+| `/api/documents/[id]` | DELETE | Hapus dokumen + file di storage + chunk terkait |
+| `/api/documents/[id]/chunks` | GET | Lihat isi chunk hasil parsing 1 dokumen |
+| `/api/admin/dashboard` | GET | Ringkasan statistik: jumlah dokumen per status, total percakapan (+minggu ini), feedback up/down, jumlah user, domisili, kontak helpdesk |
+| `/api/admin/domisili` | GET, POST | List & tambah domisili cabang |
+| `/api/admin/helpdesk-contacts` | GET, POST | List & tambah kontak WhatsApp helpdesk per domisili |
+| `/api/admin/feedback` | GET | List pesan yang diberi feedback (`up`/`down`/`all`), lengkap dengan pertanyaan sebelumnya — mendukung `limit`/`offset` pagination |
+| `/api/admin/users` | GET | List semua user terdaftar (join `auth.users` + `profiles`) |
 
 ## Alur Ingestion Dokumen
 
@@ -126,8 +167,9 @@ Server berjalan di `http://localhost:3000`.
 
 ## Autentikasi
 
-- **Admin panel** (`/admin/*`, `/login`, `/api/documents/*`): Supabase Auth dengan session cookie, dicek di `proxy.ts`. Selain status login, `proxy.ts` juga memverifikasi custom claim `user_role` — hanya user dengan role `admin` yang boleh mengakses rute admin dan `/api/documents`.
-- **Flutter/API mobile** (`/api/chat`, `/api/conversations`, dll): Bearer token dari Supabase Auth, divalidasi di `lib/auth.ts` menggunakan Supabase publishable key.
+- **Admin panel** (`/admin/*`, `/login`, `/api/documents/*`, `/api/admin/*`): Supabase Auth dengan session cookie, dicek di `proxy.ts` (matcher: `/admin/:path*`, `/api/documents/:path*`, `/api/admin/:path*`, `/login`). Selain status login (via `getClaims()`), `proxy.ts` juga memverifikasi custom claim `user_role` — hanya user dengan role `admin` yang boleh lewat; user biasa yang mencoba akses rute ini dapat 403 (API) atau redirect ke `/unauthorized` (halaman).
+- **Flutter/API mobile** (`/api/chat`, `/api/conversations`, `/api/messages/[id]/feedback`, `/api/helpdesk`, `/api/profile`, dll): **tidak** melewati `proxy.ts`. Tiap route memvalidasi Bearer token sendiri lewat `getUserFromRequest()` di `lib/auth.ts` menggunakan Supabase publishable key.
+- `/api/domisili-list` dan `/api/health` tidak memerlukan autentikasi sama sekali.
 
 ## Catatan Keamanan
 
