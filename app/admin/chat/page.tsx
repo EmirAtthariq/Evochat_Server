@@ -96,7 +96,7 @@ export default function ChatTestPage() {
 
       <div style={{ flex: 1, overflowY: 'auto', border: '1px solid #eee', borderRadius: 8, padding: 16, marginBottom: 16 }}>
         {messages.length === 0 && (
-          <p style={{ color: '#999' }}>Belum ada percakapan. Coba tanya sesuatu.</p>
+          <p style={{ color: '#999' }}>Tanya Chatbot sesuai knowledge base</p>
         )}
         {messages.map((msg, i) => (
           <div key={i} style={{ marginBottom: 12, textAlign: msg.role === 'user' ? 'right' : 'left' }}>
