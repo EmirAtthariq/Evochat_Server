@@ -76,7 +76,10 @@ export async function POST(req: Request) {
     messages,
     maxOutputTokens: 2048,
     temperature: 0.2,
-    onFinish: async ({ text }) => {
+    onFinish: async ({ finishReason, usage, text }) => {
+        console.log('DEBUG finishReason:', finishReason);
+  console.log('DEBUG usage:', usage);
+  console.log('DEBUG text length:', text.length);
       await sql`
         insert into messages (conversation_id, role, content)
         values (${conversationId}, 'assistant', ${text})
