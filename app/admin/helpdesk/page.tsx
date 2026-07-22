@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 interface Contact {
   id: string;
@@ -20,7 +20,8 @@ export default function AdminHelpdeskPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
-
+  const [filterDomisili, setFilterDomisili] = useState<string>('');
+  const [filterLabel, setFilterLabel] = useState<string>('');
   async function fetchContacts() {
     const res = await fetch('/api/admin/helpdesk-contacts');
     const data = await res.json();
@@ -98,8 +99,18 @@ export default function AdminHelpdeskPage() {
       setMessage('Gagal menghapus kontak.');
     }
   }
-
-  const grouped = contacts.reduce<Record<string, Contact[]>>((acc, c) => {
+  const labelList = useMemo(
+    () => Array.from(new Set(contacts.map((c) => c.label))).sort(),
+    [contacts]
+  );
+  const filteredContacts = useMemo(() => {
+    return contacts.filter((c) => {
+      const matchesDomisili = filterDomisili ? c.domisili === filterDomisili : true;
+      const matchesLabel = filterLabel ? c.label === filterLabel : true;
+      return matchesDomisili && matchesLabel;
+    });
+  }, [contacts, filterDomisili, filterLabel]);
+  const grouped = filteredContacts.reduce<Record<string, Contact[]>>((acc, c) => {
     (acc[c.domisili] ??= []).push(c);
     return acc;
   }, {});
@@ -170,9 +181,46 @@ export default function AdminHelpdeskPage() {
       </form>
 
       {message && <p className="text-sm text-gray-700 mb-2">{message}</p>}
+      <div className="flex flex-wrap gap-2 items-center mt-4 mb-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <span className="text-sm font-medium text-gray-600">Filter:</span>
 
+        <select
+          value={filterDomisili}
+          onChange={(e) => setFilterDomisili(e.target.value)}
+          className="px-3 py-1.5 border border-gray-300 rounded-md text-sm"
+        >
+          <option value="">Semua Domisili</option>
+          {domisiliList.map((d) => (
+            <option key={d} value={d}>{d}</option>
+          ))}
+        </select>
+
+        <select
+          value={filterLabel}
+          onChange={(e) => setFilterLabel(e.target.value)}
+          className="px-3 py-1.5 border border-gray-300 rounded-md text-sm"
+        >
+          <option value="">Semua Label</option>
+          {labelList.map((l) => (
+            <option key={l} value={l}>{l}</option>
+          ))}
+        </select>
+
+        {(filterDomisili || filterLabel) && (
+          <button
+            type="button"
+            onClick={() => {
+              setFilterDomisili('');
+              setFilterLabel('');
+            }}
+            className="px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 underline"
+          >
+            Reset Filter
+          </button>
+        )}
+      </div>
       {Object.keys(grouped).length === 0 && (
-        <p className="text-gray-400 mt-4">Belum ada kontak helpdesk.</p>
+        <p className="text-gray-400 mt-4">Tidak ada kontak yang cocok dengan filter.</p>
       )}
 
       {Object.entries(grouped).map(([domisili, items]) => (

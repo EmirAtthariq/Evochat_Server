@@ -12,7 +12,7 @@ interface FeedbackItem {
 
 type FilterType = 'all' | 'up' | 'down';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 5;
 
 export default function AdminFeedbackPage() {
   const [items, setItems] = useState<FeedbackItem[]>([]);
