@@ -17,6 +17,7 @@ export default function AdminUsersPage() {
   const [editForm, setEditForm] = useState({ nama: '', domisili: '' });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [filterDomisili, setFilterDomisili] = useState('');
 
   async function fetchUsers() {
     const res = await fetch('/api/admin/users');
@@ -70,6 +71,9 @@ export default function AdminUsersPage() {
       setSaving(false);
     }
   }
+  const filteredUsers = filterDomisili
+  ? users.filter((u) => u.domisili === filterDomisili)
+  : users;
 
   return (
     <div className="max-w-5xl">
@@ -79,8 +83,31 @@ export default function AdminUsersPage() {
       </p>
 
       {message && <p className="text-sm text-gray-700 mb-2">{message}</p>}
+      <div className="flex flex-wrap gap-2 items-center mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <span className="text-sm font-medium text-gray-600">Filter Domisili:</span>
 
-      <datalist id="domisili-options">
+        <select
+          value={filterDomisili}
+          onChange={(e) => setFilterDomisili(e.target.value)}
+          className="px-3 py-1.5 border border-gray-300 rounded-md text-sm"
+        >
+          <option value="">Semua Domisili</option>
+          {domisiliList.map((d) => (
+            <option key={d} value={d}>{d}</option>
+          ))}
+        </select>
+
+        {filterDomisili && (
+          <button
+            type="button"
+            onClick={() => setFilterDomisili('')}
+            className="px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 underline"
+          >
+            Reset Filter
+          </button>
+        )}
+      </div>
+            <datalist id="domisili-options">
         {domisiliList.map((d) => (
           <option key={d} value={d} />
         ))}
@@ -97,7 +124,7 @@ export default function AdminUsersPage() {
           </tr>
         </thead>
         <tbody>
-          {users.map((user) => {
+          {filteredUsers.map((user) => {
             const isEditing = editingId === user.id;
 
             return (
@@ -168,7 +195,11 @@ export default function AdminUsersPage() {
         </tbody>
       </table>
 
-      {users.length === 0 && <p className="text-gray-400 mt-4">Belum ada user terdaftar.</p>}
+    {filteredUsers.length === 0 && (
+      <p className="text-gray-400 mt-4">
+        {filterDomisili ? 'Tidak ada user dengan domisili ini.' : 'Belum ada user terdaftar.'}
+      </p>
+    )}
     </div>
   );
 }
