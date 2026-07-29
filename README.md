@@ -80,7 +80,7 @@ npm install
 
 ### 2. Environment variables
 
-Buat file `.env.local` di root project:
+Copy file `.env.local.example` menjadi `.env.local` di root project:
 
 ```bash
 DATABASE_URL=postgresql://user:pass@host:5432/dbname
