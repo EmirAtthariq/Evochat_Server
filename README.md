@@ -1,21 +1,21 @@
-# WIP!!!---EvoChat — Server
+# EvoChat — Server
 
 Backend untuk EvoChat: chatbot AI berbasis RAG (Retrieval-Augmented Generation). Server ini menangani ingestion dokumen knowledge base, autentikasi, percakapan chatbot, dan admin panel.
 
 ## Tech Stack
 
-- **Framework**: Next.js 16 (App Router) + React 19
+- **Framework**: Next.js `16.2.10` (App Router) + React `19.2.4`
 - **Bahasa**: TypeScript
 - **Database**: PostgreSQL + pgvector (via Supabase/Neon), diakses lewat driver `postgres`
-- **AI SDK**: Vercel AI SDK (`ai`) dengan provider `@ai-sdk/google` — model yang dipakai saat ini adalah Gemma (`gemma-4-31b-it`) lewat Google Generative AI
+- **AI SDK**: Vercel AI SDK (`ai ^7.0.16`) dengan provider `@ai-sdk/google` — model yang dipakai saat ini adalah `gemma-4-31b-it` lewat Google Generative AI
 - **Embedding**: Voyage AI (`voyage-3`), dipanggil langsung lewat REST API (tanpa SDK) di `lib/embeddings.ts`
 - **Auth**: Supabase Auth (`@supabase/supabase-js`, `@supabase/ssr`), dengan role custom claim (`user_role`) untuk membedakan admin/user
 - **Storage**: Supabase Storage
 - **Parsing dokumen**:
   - `.docx` → `mammoth` (extract raw text)
   - `.pdf` → `@llamaindex/liteparse` (parsing lokal + OCR bawaan, tidak pakai layanan cloud eksternal)
+- **Styling**: Tailwind CSS 4 (admin panel sudah full di-migrasi dari CSS biasa ke Tailwind)
 - **Linting**: ESLint 9 (`eslint-config-next`)
-
 
 ## Struktur Folder
 
@@ -34,10 +34,10 @@ server/
 │   │   ├── documents/
 │   │   │   ├── page.tsx          # List & upload dokumen knowledge base
 │   │   │   └── [id]/page.tsx     # Detail dokumen & chunk hasil parsing
-│   │   ├── domisili/page.tsx     # Kelola daftar domisili cabang
-│   │   ├── feedback/page.tsx     # Lihat feedback (up/down) pengguna atas jawaban bot
-│   │   ├── helpdesk/page.tsx     # Kelola kontak WhatsApp per domisili
-│   │   └── users/page.tsx        # List user terdaftar (join auth.users + profiles)
+│   │   ├── domisili/page.tsx     # Tambah & hapus domisili cabang (tanpa edit)
+│   │   ├── feedback/page.tsx     # Lihat feedback (up/down) pengguna atas jawaban bot, dengan pagination
+│   │   ├── helpdesk/page.tsx     # Kelola kontak WhatsApp per domisili (tambah/edit/hapus, filter domisili & label)
+│   │   └── users/page.tsx        # List user terdaftar + edit nama/domisili per user, filter by domisili
 │   └── api/
 │       ├── chat/                 # Endpoint chatbot (streaming)
 │       ├── conversations/        # Riwayat percakapan
@@ -46,16 +46,16 @@ server/
 │       │   └── [id]/feedback/    # Kirim feedback up/down untuk 1 jawaban bot
 │       ├── documents/            # Upload & kelola dokumen knowledge base
 │       │   └── [id]/chunks/      # Lihat chunk hasil parsing 1 dokumen
-│       ├── domisili-list/        # Daftar domisili cabang (untuk mobile)
+│       ├── domisili-list/        # Daftar domisili cabang (untuk mobile & dropdown admin)
 │       ├── helpdesk/             # Kontak WhatsApp per domisili user
 │       ├── health/               # Endpoint pengecekan status DB
 │       ├── profile/              # Data profil user
 │       └── admin/                # Endpoint khusus admin panel
 │           ├── dashboard/        # Ringkasan statistik (dokumen, chat, feedback, user)
-│           ├── domisili/         # CRUD daftar domisili cabang
-│           ├── helpdesk-contacts/# CRUD kontak WhatsApp helpdesk
-│           ├── feedback/         # List feedback up/down beserta Q&A-nya
-│           └── users/            # List user terdaftar
+│           ├── domisili/         # List, tambah, hapus domisili cabang (tidak ada edit)
+│           ├── helpdesk-contacts/# CRUD penuh kontak WhatsApp helpdesk (list, tambah, edit, hapus)
+│           ├── feedback/         # List feedback up/down beserta Q&A-nya, dengan pagination
+│           └── users/            # List user + edit profil (nama, domisili) per user
 ├── lib/
 │   ├── auth.ts                   # Validasi Bearer token (dipakai Flutter/mobile)
 │   ├── chunk.ts                  # Chunking dokumen per-heading
@@ -67,7 +67,7 @@ server/
 │   ├── supabase-client.ts        # Supabase client (browser, admin panel)
 │   └── supabase-server.ts        # Supabase client (server, cek session cookie)
 ├── public/                       # Aset statis (svg, dll — masih bawaan starter Next.js)
-└── proxy.ts                      # Proteksi route /admin, /login, dan /api/documents (dulu middleware.ts)
+└── proxy.ts                      # Proteksi route /admin, /login, dan /api/documents, /api/admin (dulu middleware.ts)
 ```
 
 ## Setup
@@ -103,7 +103,7 @@ Jalankan schema SQL di SQL Editor Supabase/Neon (lihat `docs/schema.sql` atau ri
 | `document_chunks` | Hasil chunking + `embedding` vector, `heading_path`, `chunk_index`, relasi ke `documents` (cascade delete) |
 | `conversations` | Riwayat percakapan per user (`title`, `user_id`) |
 | `messages` | Isi pesan (`role`: user/assistant, `content`, **`feedback`**: `up`/`down`/`null`), relasi ke `conversations` (cascade delete) |
-| `profiles` | Profil tambahan user (`nama`, `domisili`), relasi 1:1 ke `auth.users` bawaan Supabase |
+| `profiles` | Profil tambahan user (`nama`, `domisili`), relasi 1:1 ke `auth.users` bawaan Supabase — di-upsert lewat admin panel |
 | `domisili` | Master data nama domisili cabang (`nama`) |
 | `helpdesk_contacts` | Kontak WhatsApp helpdesk per domisili (`domisili`, `label`, `pic_name`, `whatsapp_number`) |
 
@@ -128,7 +128,7 @@ Server berjalan di `http://localhost:3000`.
 | `/api/conversations/[id]/messages` | GET | Bearer token | Isi 1 percakapan |
 | `/api/conversations/[id]` | DELETE | Bearer token | Hapus percakapan (message ikut terhapus via cascade) |
 | `/api/messages/[id]/feedback` | POST | Bearer token | Kirim/ubah feedback (`up`/`down`/`null`) untuk 1 jawaban bot |
-| `/api/domisili-list` | GET | — | Daftar nama domisili cabang (untuk pilihan di app) |
+| `/api/domisili-list` | GET | — | Daftar nama domisili cabang (untuk pilihan di app & dropdown admin) |
 | `/api/helpdesk` | GET | Bearer token | Kontak WhatsApp sesuai domisili user yang login |
 | `/api/profile` | GET | Bearer token | Data profil (email, nama, domisili) |
 | `/api/health` | GET | — | Cek koneksi database (`select now()`) |
@@ -144,9 +144,12 @@ Semua rute di bawah ini dan `/api/documents/*` dijaga oleh `proxy.ts` — reques
 | `/api/documents/[id]/chunks` | GET | Lihat isi chunk hasil parsing 1 dokumen |
 | `/api/admin/dashboard` | GET | Ringkasan statistik: jumlah dokumen per status, total percakapan (+minggu ini), feedback up/down, jumlah user, domisili, kontak helpdesk |
 | `/api/admin/domisili` | GET, POST | List & tambah domisili cabang |
+| `/api/admin/domisili/[id]` | DELETE | Hapus domisili cabang (tidak ada endpoint edit) |
 | `/api/admin/helpdesk-contacts` | GET, POST | List & tambah kontak WhatsApp helpdesk per domisili |
-| `/api/admin/feedback` | GET | List pesan yang diberi feedback (`up`/`down`/`all`), lengkap dengan pertanyaan sebelumnya — mendukung `limit`/`offset` pagination |
+| `/api/admin/helpdesk-contacts/[id]` | PUT, DELETE | Edit & hapus 1 kontak WhatsApp helpdesk |
+| `/api/admin/feedback` | GET | List pesan yang diberi feedback (`up`/`down`/`all`), lengkap dengan pertanyaan sebelumnya. Query param `limit` (default 50, maksimum 200) dan `offset` untuk pagination, response menyertakan `total` |
 | `/api/admin/users` | GET | List semua user terdaftar (join `auth.users` + `profiles`) |
+| `/api/admin/users/[id]` | PUT | Upsert `nama` dan `domisili` user ke tabel `profiles` |
 
 ## Alur Ingestion Dokumen
 
@@ -160,10 +163,21 @@ Semua rute di bawah ini dan `/api/documents/*` dijaga oleh `proxy.ts` — reques
 ## Alur Chat (RAG)
 
 1. Pertanyaan user di-embed (Voyage AI, `input_type: query`)
-2. Vector similarity search ke `document_chunks`, difilter berdasarkan domisili user
+2. Vector similarity search ke `document_chunks` (top 5 chunk), difilter berdasarkan domisili user
 3. Konteks yang relevan disusun jadi system prompt
-4. Model AI (Google Generative AI — saat ini `gemma-4-31b-it`) generate jawaban streaming, hanya berdasarkan konteks yang diberikan
-5. Riwayat percakapan disimpan ke `conversations` dan `messages`
+4. Model AI (`gemma-4-31b-it`, `temperature: 0.2`, `maxOutputTokens: 2048`) generate jawaban streaming, hanya berdasarkan konteks yang diberikan
+5. System prompt sudah di-tuning supaya gaya jawaban ramah dan hangat (bukan template kaku), dengan aturan eksplisit: tidak boleh menambahkan disclaimer soal "tidak punya akses real-time", dan mengarahkan ke helpdesk kalau pertanyaan tidak terjawab dari konteks
+6. Riwayat percakapan disimpan ke `conversations` dan `messages`, header respons `X-Conversation-Id` dikirim ke client
+
+## Panel Admin — Ringkasan Fitur
+
+- **Documents**: upload, lihat status ingestion, lihat chunk hasil parsing, hapus dokumen
+- **Users**: list seluruh user terdaftar, filter berdasarkan domisili (client-side), edit inline nama & domisili per user (upsert ke `profiles`)
+- **Domisili**: tambah & hapus master data domisili cabang; belum ada endpoint untuk mengedit nama domisili yang sudah ada
+- **Helpdesk**: tambah, edit, hapus kontak WhatsApp; filter berdasarkan domisili dan label; tampilan dikelompokkan per domisili
+- **Feedback**: list jawaban bot yang mendapat feedback up/down beserta pertanyaan pemicunya, dengan pagination
+- **Dashboard**: ringkasan statistik lintas fitur di atas
+- **Chat (test)**: halaman untuk admin mencoba langsung alur chat RAG
 
 ## Autentikasi
 
@@ -176,3 +190,4 @@ Semua rute di bawah ini dan `/api/documents/*` dijaga oleh `proxy.ts` — reques
 - `SUPABASE_SECRET_KEY` bypass RLS — hanya dipakai di server, tidak pernah dikirim ke client
 - Koneksi database (`DATABASE_URL`) berjalan sebagai superuser, sehingga RLS di Postgres tidak memengaruhi query dari server ini
 - Jika RLS diaktifkan di Supabase, tujuannya untuk menutup akses langsung dari REST API publik (menggunakan publishable key), bukan untuk membatasi server ini
+
