@@ -11,24 +11,29 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+async function handleLogin(e: React.FormEvent) {
+  e.preventDefault();
+  setLoading(true);
+  setError('');
 
+  try {
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       setError(error.message);
-      setLoading(false);
       return;
     }
 
     router.push('/admin');
-    router.refresh(); // penting: refresh biar middleware baca session terbaru
+    router.refresh();
+  } catch (err) {
+    console.error('Login error:', err);
+    setError(err instanceof Error ? err.message : 'Terjadi kesalahan, coba lagi.');
+  } finally {
+    setLoading(false);
   }
-
+}
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-sm rounded-xl border border-gray-200 bg-white p-8 shadow-sm">

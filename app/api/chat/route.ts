@@ -87,7 +87,11 @@ export async function POST(req: Request) {
     },
   });
 
-  const response = result.toTextStreamResponse();
-  response.headers.set('X-Conversation-Id', conversationId);
-  return response;
+const response = result.toTextStreamResponse({
+  headers: {
+    'X-Conversation-Id': String(conversationId),
+  },
+});
+
+return response;
 }
